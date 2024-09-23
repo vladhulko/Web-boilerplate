@@ -1,6 +1,4 @@
-const testModules = require('./test-module');
-require('../css/app.css');
-
+import testModules from './test-module.js';
 /** ******** Your code here! *********** */
 
 console.log(testModules.hello);
