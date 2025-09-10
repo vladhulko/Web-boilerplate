@@ -1,0 +1,89 @@
+.header,
+.navigation,
+.main-content > section,
+.footer {
+  padding-left: $container-padding;
+  padding-right: $container-padding;
+}
+
+.header, .navigation {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.main-content > section, .footer {
+  padding-top: $container-padding;
+  padding-bottom: $container-padding;
+}
+
+.section-title {
+  margin-bottom: 20px;
+  font-size: 24px;
+  text-align: center;
+  width: 100%;
+}
+
+.top-teachers,
+.statistics,
+.favorites,
+.description {
+  position: relative;
+  margin-top: 24px;
+  padding-top: 48px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 2px;
+    background-color: $border-color;
+  }
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.header, .navigation, .footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header .logo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #FFFFFF;
+  position: relative;
+  padding: 10px;
+  text-shadow:
+          -1px -1px 0 $accent-color,
+          1px 1px 0 #000;
+  transition: text-shadow 0.3s ease;
+  &:hover {
+    text-shadow:
+            -2px -2px 2px $accent-color,
+            2px 2px 2px #000;
+  }
+}
+
+.navigation .nav-list {
+  display: flex;
+  gap: 20px;
+}
+
+.description {
+  p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: $secondary-text-color;
+
+    & + p {
+      margin-top: 1em;
+    }
+  }
+}
