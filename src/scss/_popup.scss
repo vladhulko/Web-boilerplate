@@ -174,7 +174,15 @@
     height: 150px;
     object-fit: cover;
   }
+
+    .initials {
+      font-size: 50px;
+      font-weight: bold;
+      color: $accent-color;
+    }
+
 }
+
 
 .info-star {
   position: absolute;
