@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/extensions
 import { randomUserMock, additionalUsers } from './Lab2-mock.js';
 
 const COURSES = [
@@ -13,62 +12,80 @@ const capitalize = (str) => {
 
 const getRandomCourse = () => COURSES[Math.floor(Math.random() * COURSES.length)];
 
-// Task 1: Merge and Format
-function formatUser(user) {
-  const isRandomUser = user.name && user.name.first;
+const getRandomHexColor = () => {
+  const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+  return `#${randomColor.padStart(6, '0')}`;
+};
 
-  return {
-    id: user.login?.uuid || user.id,
-    gender: user.gender || 'N/A',
-    title: isRandomUser ? user.name.title : user.title,
-    full_name: isRandomUser
-      ? `${capitalize(user.name.first)} ${capitalize(user.name.last)}`
-      : user.full_name,
-    city: capitalize(isRandomUser ? user.location.city : user.city),
-    state: capitalize(isRandomUser ? user.location.state : user.state),
-    country: capitalize(isRandomUser ? user.location.country : user.country),
-    postcode: isRandomUser ? user.location.postcode : user.postcode,
-    coordinates: isRandomUser ? user.location.coordinates : user.coordinates,
-    timezone: isRandomUser ? user.location.timezone : user.timezone,
-    email: user.email,
-    b_date: isRandomUser ? user.dob.date : user.b_day,
-    age: isRandomUser ? user.dob.age : user.age,
-    phone: user.phone,
-    picture_large: isRandomUser ? user.picture.large : user.picture_large,
-    picture_thumbnail: isRandomUser ? user.picture.thumbnail : user.picture_thumbnail,
-    favorite: Math.random() < 0.2,
-    course: getRandomCourse(),
-    bg_color: `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`,
-    note: 'Some note about the user.',
-  };
+//Tas1: Merge
+function mergeUsers(existingUser, newUser) {
+  const merged = { ...existingUser };
+  Object.keys(newUser).forEach((key) => {
+    if (newUser[key] != null) {
+      merged[key] = newUser[key];
+    }
+  });
+  return merged;
 }
 
 function mergeAndFormatUsers(users1, users2) {
-  const combined = [...users1, ...users2];
-  const uniqueUsers = new Map();
+  const allRawUsers = [...users1, ...users2];
+  const uniqueUsersMap = new Map();
 
-  combined.forEach((user) => {
-    const id = user.login?.uuid || user.id;
-    if (id && !uniqueUsers.has(id)) {
-      uniqueUsers.set(id, user);
+  allRawUsers.forEach((rawUser) => {
+    const isRandomUser = rawUser.name && rawUser.name.first;
+    const id = rawUser.login?.uuid || rawUser.id;
+
+    if (!id) return;
+
+    const formattedUser = {
+      id,
+      gender: capitalize(rawUser.gender),
+      title: isRandomUser ? rawUser.name.title : rawUser.title,
+      full_name: isRandomUser
+        ? `${capitalize(rawUser.name.first)} ${capitalize(rawUser.name.last)}`
+        : rawUser.full_name,
+      city: capitalize(isRandomUser ? rawUser.location.city : rawUser.city),
+      state: capitalize(isRandomUser ? rawUser.location.state : rawUser.state),
+      country: capitalize(isRandomUser ? rawUser.location.country : rawUser.country),
+      postcode: isRandomUser ? rawUser.location.postcode : rawUser.postcode,
+      coordinates: isRandomUser ? rawUser.location.coordinates : rawUser.coordinates,
+      timezone: isRandomUser ? rawUser.location.timezone : rawUser.timezone,
+      email: rawUser.email,
+      b_date: isRandomUser ? rawUser.dob.date : rawUser.b_day,
+      age: isRandomUser ? rawUser.dob.age : rawUser.age,
+      phone: rawUser.phone,
+      picture_large: isRandomUser ? rawUser.picture.large : rawUser.picture_large,
+      picture_thumbnail: isRandomUser ? rawUser.picture.thumbnail : rawUser.picture_thumbnail,
+      favorite: rawUser.favorite ?? Math.random() < 0.2,
+      course: rawUser.course || getRandomCourse(),
+      bg_color: user.bg_color || getRandomHexColor(),
+      note: rawUser.note || 'Default note for user.',
+    };
+
+    if (uniqueUsersMap.has(id)) {
+      const existingUser = uniqueUsersMap.get(id);
+      uniqueUsersMap.set(id, mergeUsers(existingUser, formattedUser));
+    } else {
+      uniqueUsersMap.set(id, formattedUser);
     }
   });
 
-  return Array.from(uniqueUsers.values()).map(formatUser);
+  return Array.from(uniqueUsersMap.values());
 }
 
-// Task 2: Validation
 const normalizeUser = (user) => ({
   ...user,
   phone: String(user.phone).replace(/\D/g, ''),
 });
 
+// Task 2: Validate
 function validateUser(user) {
   const errors = [];
   const isCapitalizedString = (str) => typeof str === 'string' && str.length > 0 && str[0] === str[0].toUpperCase();
 
-  ['full_name', 'city', 'country', 'state'].forEach((field) => {
-    if (!isCapitalizedString(user[field])) {
+  ['full_name', 'gender', 'note', 'state', 'city', 'country'].forEach((field) => {
+    if (user[field] && !isCapitalizedString(user[field])) {
       errors.push(`Field '${field}' must be a capitalized string.`);
     }
   });
@@ -100,7 +117,6 @@ function filterValidUsers(users) {
     });
 }
 
-// Task 3: Filter
 function filterUsers(users, criteria) {
   return users.filter((user) => Object.keys(criteria).every((key) => {
     const condition = criteria[key];
@@ -108,7 +124,7 @@ function filterUsers(users, criteria) {
 
     if (userValue == null) return false;
 
-    if (typeof condition === 'object' && condition !== null && !Array.isArray(condition)) {
+    if (typeof condition === 'object' && !Array.isArray(condition)) {
       if (condition.min != null && userValue < condition.min) return false;
       if (condition.max != null && userValue > condition.max) return false;
       return true;
@@ -120,12 +136,14 @@ function filterUsers(users, criteria) {
   }));
 }
 
-// Task 4: Sort
 function sortUsers(users, key, direction = 'asc') {
   const sorted = [...users];
   const dir = direction === 'asc' ? 1 : -1;
 
   sorted.sort((a, b) => {
+    if (a[key] == null) return 1;
+    if (b[key] == null) return -1;
+
     if (a[key] > b[key]) return 1 * dir;
     if (a[key] < b[key]) return -1 * dir;
     return 0;
@@ -133,17 +151,20 @@ function sortUsers(users, key, direction = 'asc') {
   return sorted;
 }
 
-// Task 5: Search
 function searchUsers(users, query) {
   const lowerCaseQuery = String(query).toLowerCase();
-  return users.filter((user) => (
-    user.full_name.toLowerCase().includes(lowerCaseQuery)
-    || user.note.toLowerCase().includes(lowerCaseQuery)
-    || String(user.age).includes(lowerCaseQuery)
-  ));
+  return users.filter((user) => Object.keys(user).some((key) => {
+    const value = user[key];
+    if (typeof value === 'string') {
+      return value.toLowerCase().includes(lowerCaseQuery);
+    }
+    if (typeof value === 'number') {
+      return String(value).includes(lowerCaseQuery);
+    }
+    return false;
+  }));
 }
 
-// Task 6: Calculate Percentage
 function calculatePercentage(users, criteria) {
   if (!users || users.length === 0) return 0;
   const filteredCount = filterUsers(users, criteria).length;
@@ -152,10 +173,11 @@ function calculatePercentage(users, criteria) {
 
 console.log('--- Lab 2 Start ---');
 
-console.group('Task 1: Merge and Format');
+console.group('Task 1: Merge, Format and Enrich');
 const initialTeachers = mergeAndFormatUsers(randomUserMock, additionalUsers);
-console.log(`Total users after merging: ${initialTeachers.length}`);
-console.log('Sample processed teacher object (before validation):', initialTeachers[0]);
+console.log(`Total unique users after merging: ${initialTeachers.length}`);
+const olivia = initialTeachers.find(u => u.full_name.includes('Olivia'));
+console.log('Sample merged user:', olivia);
 console.groupEnd();
 
 console.group('Task 2: Validate Users');
@@ -165,30 +187,30 @@ console.log('Sample valid teacher object:', allTeachers[0]);
 console.groupEnd();
 
 console.group('Task 3: Filter Users');
-const filterCriteria = { country: 'Germany', age: { min: 60 } };
+const filterCriteria = { country: 'Norway', gender: 'Female' };
 const filteredTeachers = filterUsers(allTeachers, filterCriteria);
 console.log('Filtering by:', filterCriteria);
-console.log(`Found ${filteredTeachers.length} teachers:`, filteredTeachers.map((u) => u.full_name));
+console.log(`Found ${filteredTeachers.length} female teachers from Norway:`, filteredTeachers.map((u) => u.full_name));
 console.groupEnd();
 
 console.group('Task 4: Sort Users');
-const sortedByName = sortUsers(allTeachers, 'full_name', 'asc');
-console.log('Sorted by Full Name (ASC, first 5):', sortedByName.slice(0, 5).map((u) => u.full_name));
-const sortedByAge = sortUsers(allTeachers, 'age', 'desc');
-console.log('Sorted by Age (DESC, first 5):', sortedByAge.slice(0, 5).map((u) => `${u.full_name} - ${u.age}`));
+const sortedByCountry = sortUsers(allTeachers, 'country', 'asc');
+console.log('Sorted by Country (ASC, first 5):', sortedByCountry.slice(0, 5).map((u) => `${u.full_name} - ${u.country}`));
+const sortedByAgeDesc = sortUsers(allTeachers, 'age', 'desc');
+console.log('Sorted by Age (DESC, first 5):', sortedByAgeDesc.slice(0, 5).map((u) => `${u.full_name} - ${u.age}`));
 console.groupEnd();
 
 console.group('Task 5: Search Users');
-const searchQuery = 'Norbert';
+const searchQuery = 'Eugene';
 const foundTeachers = searchUsers(allTeachers, searchQuery);
 console.log(`Searching for teachers with query "${searchQuery}"...`);
 console.log(`Found ${foundTeachers.length} teachers:`, foundTeachers.map((u) => u.full_name));
 console.groupEnd();
 
 console.group('Task 6: Calculate Percentage');
-const percentageFilters = { age: { min: 40 } };
+const percentageFilters = { favorite: true };
 const percentage = calculatePercentage(allTeachers, percentageFilters);
-console.log(`Percentage of teachers with age >= ${percentageFilters.age.min}: ${percentage.toFixed(2)}%`);
+console.log(`Percentage of favorite teachers: ${percentage.toFixed(2)}%`);
 console.groupEnd();
 
 console.log('--- Lab 2 End ---');
