@@ -106,7 +106,7 @@ function filterUsers(users, criteria) {
     const condition = criteria[key];
     const userValue = user[key];
 
-    if (userValue == null) return false; // Перевіряє і undefined, і null
+    if (userValue == null) return false;
 
     if (typeof condition === 'object' && condition !== null && !Array.isArray(condition)) {
       if (condition.min != null && userValue < condition.min) return false;
@@ -136,7 +136,6 @@ function sortUsers(users, key, direction = 'asc') {
 // Task 5: Search
 function searchUsers(users, query) {
   const lowerCaseQuery = String(query).toLowerCase();
-  // Виправлено форматування для ESLint
   return users.filter((user) => (
     user.full_name.toLowerCase().includes(lowerCaseQuery)
     || user.note.toLowerCase().includes(lowerCaseQuery)
@@ -176,7 +175,6 @@ console.group('Task 4: Sort Users');
 const sortedByName = sortUsers(allTeachers, 'full_name', 'asc');
 console.log('Sorted by Full Name (ASC, first 5):', sortedByName.slice(0, 5).map((u) => u.full_name));
 const sortedByAge = sortUsers(allTeachers, 'age', 'desc');
-// Виправлено форматування для ESLint
 console.log('Sorted by Age (DESC, first 5):', sortedByAge.slice(0, 5).map((u) => `${u.full_name} - ${u.age}`));
 console.groupEnd();
 
@@ -184,7 +182,6 @@ console.group('Task 5: Search Users');
 const searchQuery = 'Norbert';
 const foundTeachers = searchUsers(allTeachers, searchQuery);
 console.log(`Searching for teachers with query "${searchQuery}"...`);
-// Виправлено форматування для ESLint
 console.log(`Found ${foundTeachers.length} teachers:`, foundTeachers.map((u) => u.full_name));
 console.groupEnd();
 
