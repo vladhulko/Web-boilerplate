@@ -1,0 +1,84 @@
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 20px;
+
+    .search-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+  }
+
+  .navigation {
+    flex-direction: column;
+    gap: 15px;
+
+    .nav-list {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+
+  .filters {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .filter-group {
+    & + .filter-group {
+      padding-left: 0;
+      &::before {
+        display: none;
+      }
+    }
+  }
+
+  .teachers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 30px 15px;
+  }
+
+  .favorites-container {
+    padding: 0;
+    .carousel-btn {
+      width: 30px;
+      height: 30px;
+      &.prev-btn {
+        left: 5px;
+      }
+      &.next-btn {
+        right: 5px;
+      }
+    }
+  }
+
+  .stats-table {
+    font-size: 12px;
+    th, td {
+      padding: 10px 5px;
+    }
+  }
+
+  .popup-content--info {
+    max-width: 90vw;
+  }
+
+  .popup-body--info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-avatar {
+    float: none;
+    margin-right: 0;
+  }
+
+  .info-star {
+    top: 55px;
+    right: 15px;
+  }
+}
+
