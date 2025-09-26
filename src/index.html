@@ -31,102 +31,32 @@
 
             <div class="filters">
                 <div class="filter-group">
-                    <label>Age</label>
-                    <select class="filter-select">
-                        <option>18-31</option>
-                    </select>
+                    <label for="age-filter">Age</label>
+                    <select id="age-filter" class="filter-select"></select>
                 </div>
                 <div class="filter-group">
-                    <label>Region</label>
-                    <select class="filter-select">
-                        <option>Europe</option>
-                    </select>
+                    <label for="country-filter">Country</label>
+                    <select id="country-filter" class="filter-select"></select>
                 </div>
                 <div class="filter-group">
-                    <label>Sex</label>
-                    <select class="filter-select">
-                        <option>Male</option>
-                    </select>
+                    <label for="gender-filter">Sex</label>
+                    <select id="gender-filter" class="filter-select"></select>
                 </div>
                 <div class="filter-group">
                     <label>
-                        <input type="checkbox" class="filter-checkbox">
+                        <input id="photo-filter" type="checkbox" class="filter-checkbox">
                         Only with photo
                     </label>
                 </div>
                 <div class="filter-group">
                     <label>
-                        <input type="checkbox" class="filter-checkbox">
+                        <input id="favorite-filter" type="checkbox" class="filter-checkbox">
                         Only favorites
                     </label>
                 </div>
             </div>
 
             <div class="teachers-grid">
-                <div class="teacher-card">
-                    <div class="teacher-avatar">
-                        <img src="./images/bublyk.jpeg" alt="Bublyk Volodymyr" referrerpolicy="no-referrer">
-                        <div class="star-badge">★</div>
-                    </div>
-                    <h3 class="teacher-name">Bublyk<br>Volodymyr</h3>
-                    <p class="teacher-location">Ukraine</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar">
-                        <img src="./images/protsenko.jpeg" alt="Protsenko Volodymyr" referrerpolicy="no-referrer">
-                    </div>
-                    <h3 class="teacher-name">Protsenko<br>Volodymyr</h3>
-                    <p class="teacher-subject">MOPI</p>
-                    <p class="teacher-location">Ukraine</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar">
-                        <img src="./images/kuzmenko.jpeg" alt="Kuzmenko Dmytro" referrerpolicy="no-referrer">
-                        <div class="star-badge">★</div>
-                    </div>
-                    <h3 class="teacher-name">Kuzmenko<br>Dmytro</h3>
-                    <p class="teacher-subject">ML</p>
-                    <p class="teacher-location">Netherlands</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar">
-                        <img src="./images/hlyba.jpg" alt="Hlybovets Andriy" referrerpolicy="no-referrer">
-                    </div>
-                    <h3 class="teacher-name">Hlybovets<br>Andriy</h3>
-                    <p class="teacher-subject">Computer Science</p>
-                    <p class="teacher-location">USA</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar">
-                        <img src="./images/Semen_Gorokhovsky.avif" alt="Semen Gorokhovsky" referrerpolicy="no-referrer">
-                        <div class="star-badge">★</div>
-                    </div>
-                    <h3 class="teacher-name">Semen<br>Gorokhovsky</h3>
-                    <p class="teacher-subject">Blockchain</p>
-                    <p class="teacher-location">China</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar initial-avatar">
-                        <span class="initials">O.D</span>
-                    </div>
-                    <h3 class="teacher-name">Oleksiy<br>Dzhos</h3>
-                    <p class="teacher-subject">Python</p>
-                    <p class="teacher-location">Poland</p>
-                </div>
-
-                <div class="teacher-card">
-                    <div class="teacher-avatar initial-avatar">
-                        <span class="initials">Y.V</span>
-                    </div>
-                    <h3 class="teacher-name">Yaroslav<br>Vozniuk</h3>
-                    <p class="teacher-subject">Cisco</p>
-                    <p class="teacher-location">UK</p>
-                </div>
             </div>
         </section>
 
@@ -135,85 +65,15 @@
             <div class="stats-table-container">
                 <table class="stats-table">
                     <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Speciality</th>
-                        <th>Age</th>
-                        <th>Gender</th>
-                        <th>Nationality</th>
+                    <tr id="stats-table-header">
+                        <th data-sort-by="full_name">Name</th>
+                        <th data-sort-by="course">Speciality</th>
+                        <th data-sort-by="age">Age</th>
+                        <th data-sort-by="gender">Gender</th>
+                        <th data-sort-by="country">Nationality</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>Daisy Alexander</td>
-                        <td>Chemistry</td>
-                        <td>28</td>
-                        <td>Female</td>
-                        <td>Vietnam</td>
-                    </tr>
-                    <tr>
-                        <td>Julia Bradley</td>
-                        <td>Math</td>
-                        <td>26</td>
-                        <td>Female</td>
-                        <td>USA</td>
-                    </tr>
-                    <tr>
-                        <td>Rita Hart</td>
-                        <td>Art</td>
-                        <td>41</td>
-                        <td>Female</td>
-                        <td>Ireland</td>
-                    </tr>
-                    <tr>
-                        <td>Jonathan Jacobs</td>
-                        <td>Math</td>
-                        <td>32</td>
-                        <td>Male</td>
-                        <td>England</td>
-                    </tr>
-                    <tr>
-                        <td>Nathaniel White</td>
-                        <td>Computer Science</td>
-                        <td>37</td>
-                        <td>Male</td>
-                        <td>Austria</td>
-                    </tr>
-                    <tr>
-                        <td>Frank Medina</td>
-                        <td>English</td>
-                        <td>43</td>
-                        <td>Male</td>
-                        <td>Italy</td>
-                    </tr>
-                    <tr>
-                        <td>Ella Curtis</td>
-                        <td>Chess</td>
-                        <td>34</td>
-                        <td>Female</td>
-                        <td>USA</td>
-                    </tr>
-                    <tr>
-                        <td>Claire Simmonds</td>
-                        <td>Art</td>
-                        <td>38</td>
-                        <td>Female</td>
-                        <td>Netherlands</td>
-                    </tr>
-                    <tr>
-                        <td>Benjamin Knight</td>
-                        <td>Biology</td>
-                        <td>44</td>
-                        <td>Male</td>
-                        <td>Scotland</td>
-                    </tr>
-                    <tr>
-                        <td>Norma Rose</td>
-                        <td>Statistics</td>
-                        <td>36</td>
-                        <td>Female</td>
-                        <td>France</td>
-                    </tr>
+                    <tbody id="stats-table-body">
                     </tbody>
                 </table>
             </div>
@@ -231,56 +91,6 @@
             <div class="favorites-container">
                 <button class="carousel-btn prev-btn"></button>
                 <div class="favorites-grid">
-                    <div class="teacher-card">
-                        <div class="teacher-avatar">
-                            <img src="./images/bublyk.jpeg" alt="Ihor Tkachuk" referrerpolicy="no-referrer">
-                            <div class="star-badge">★</div>
-                        </div>
-                        <h3 class="teacher-name">Bublyk<br>Volodymyr</h3>
-                        <p class="teacher-location">Ukraine</p>
-                    </div>
-
-                    <div class="teacher-card">
-                        <div class="teacher-avatar initial-avatar">
-                            <span class="initials">A.M</span>
-                        </div>
-                        <h3 class="teacher-name">Anna<br>Makarevich</h3>
-                        <p class="teacher-location">Poland</p>
-                    </div>
-
-                    <div class="teacher-card">
-                        <div class="teacher-avatar">
-                            <img src="./images/hlyba.jpg" alt="Hlybovets Andriy" referrerpolicy="no-referrer">
-                        </div>
-                        <h3 class="teacher-name">Hlybovets<br>Andriy</h3>
-                        <p class="teacher-location">USA</p>
-                    </div>
-
-                    <div class="teacher-card">
-                        <div class="teacher-avatar">
-                            <img src="./images/Semen_Gorokhovsky.avif" alt="Semen Gorokhovsky" referrerpolicy="no-referrer">
-                            <div class="star-badge">★</div>
-                        </div>
-                        <h3 class="teacher-name">Semen<br>Gorokhovsky</h3>
-                        <p class="teacher-location">China</p>
-                    </div>
-
-                    <div class="teacher-card">
-                        <div class="teacher-avatar">
-                            <img src="./images/kuzmenko.jpeg" alt="Kuzmenko Dmytro" referrerpolicy="no-referrer">
-                            <div class="star-badge">★</div>
-                        </div>
-                        <h3 class="teacher-name">Kuzmenko<br>Dmytro</h3>
-                        <p class="teacher-location">Netherlands</p>
-                    </div>
-
-                    <div class="teacher-card">
-                        <div class="teacher-avatar">
-                            <img src="./images/protsenko.jpeg" alt="Protsenko Volodymyr" referrerpolicy="no-referrer">
-                        </div>
-                        <h3 class="teacher-name">Protsenko<br>Volodymyr</h3>
-                        <p class="teacher-location">Ukraine</p>
-                    </div>
                 </div>
                 <button class="carousel-btn next-btn"></button>
             </div>
@@ -310,44 +120,38 @@
             <button class="popup-close" id="closeAddTeacherPopup">&times;</button>
         </header>
         <div class="popup-body">
-            <form class="form" novalidate>
+            <form class="form" id="add-teacher-form" novalidate>
+                <div class="form-errors" style="color: red; margin-bottom: 10px;"></div>
                 <div class="form-group">
                     <label for="name">Name</label>
-                    <input type="text" id="name" placeholder="Enter name" required>
+                    <input type="text" id="name" name="name" placeholder="Enter name" required>
                 </div>
                 <div class="form-group">
                     <label for="specialty">Specialty</label>
-                    <select id="specialty" required>
+                    <select id="specialty" name="specialty" required>
                         <option value="">Select specialty</option>
-                        <option>Chemistry</option>
-                        <option>Math</option>
-                        <option>Art</option>
-                        <option>Vocal</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group form-group-half">
                         <label for="country">Country</label>
-                        <select id="country" required>
+                        <select id="country" name="country" required>
                             <option value="">Select country</option>
-                            <option>Ukraine</option>
-                            <option>Poland</option>
-                            <option>USA</option>
                         </select>
                     </div>
                     <div class="form-group form-group-half">
                         <label for="city">City</label>
-                        <input type="text" id="city" placeholder="Enter city" required>
+                        <input type="text" id="city" name="city" placeholder="Enter city" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group form-group-half">
                         <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="Enter email" required>
+                        <input type="email" id="email" name="email" placeholder="Enter email" required>
                     </div>
                     <div class="form-group form-group-half">
                         <label for="phone">Phone</label>
-                        <input type="tel" id="phone" placeholder="Enter phone" required>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter phone" required>
                     </div>
                 </div>
 
@@ -355,7 +159,7 @@
                     <div class="form-group-half">
                         <div class="form-group">
                             <label for="dob">Date of birth</label>
-                            <input type="date" id="dob" required>
+                            <input type="date" id="dob" name="dob" required>
                         </div>
                         <div class="form-group">
                             <label>Sex</label>
@@ -370,21 +174,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="bgColor">Background color</label>
-                            <div class="color-picker-wrapper">
-                                <input type="color" id="bgColor" value="#F56A0A" class="form-color-input">
-                                <span>Select color</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group-half">
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="notes">Notes (optional)</label>
-                    <textarea id="notes" rows="4"></textarea>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
                 </div>
                 <button type="submit" class="form-submit-btn">Add</button>
             </form>
@@ -394,6 +188,7 @@
 
 <div class="popup" id="teacherInfoPopup">
     <div class="popup-content popup-content--info">
+        <span class="info-star" id="popupStar"></span>
         <header class="popup-header">
             <h2 class="popup-title">Teacher Info</h2>
             <button class="popup-close" id="closeTeacherInfoPopup">&times;</button>
@@ -404,14 +199,14 @@
             <div class="info-details">
                 <p class="info-name"></p>
                 <p class="info-subject"></p>
+                <p class="info-age-gender"></p>
                 <p class="info-location"></p>
                 <a href="#" class="info-email"></a>
-                <p class="info-phone">+380501234567</p>
+                <p class="info-phone"></p>
             </div>
         </div>
         <div class="popup-footer">
             <p class="info-description">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin et felis eleifend, commodo justo ac, porta libero.
             </p>
             <a href="#" class="info-map-toggle">toggle map</a>
         </div>

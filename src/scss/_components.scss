@@ -120,6 +120,20 @@
     }
   }
 
+  .star-badge {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 24px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &.favorite {
+      color: $star-badge-color;
+    }
+  }
+
   .initial-avatar {
     border: 3px solid $accent-color;
     background-color: transparent;
@@ -201,26 +215,46 @@
       font-weight: bold;
       color: $secondary-text-color;
       position: relative;
-      cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, color 0.3s;
+      user-select: none;
 
-      &::after {
-        content: '↓';
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        opacity: 0;
-        transition: opacity 0.3s;
-        font-size: 16px;
-      }
-
-      &:hover {
-        background-color: #f0f0f0;
-        border-bottom: 2px solid $primary-text-color;
+      // Apply these styles only to headers that are sortable
+      &[data-sort-by] {
+        cursor: pointer;
 
         &::after {
-          opacity: 1;
+          content: '↓';
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          opacity: 0;
+          transition: opacity 0.3s, transform 0.3s;
+          font-size: 16px;
+        }
+
+        &:hover {
+          background-color: #f0f0f0;
+          border-bottom: 2px solid $primary-text-color;
+        }
+
+        // When a column is sorted, show the arrow
+        &.sorted-asc,
+        &.sorted-desc {
+          color: $primary-text-color; // Make sorted header text more prominent
+          &::after {
+            opacity: 1;
+          }
+        }
+
+        // Arrow pointing up for ascending
+        &.sorted-asc::after {
+          transform: translateY(-50%) rotate(180deg);
+        }
+
+        // Arrow pointing down for descending
+        &.sorted-desc::after {
+          transform: translateY(-50%) rotate(0deg);
         }
       }
     }
@@ -230,6 +264,7 @@
     background-color: $table-row-pink;
   }
 }
+
 
 .pagination {
   margin-top: 20px;
@@ -309,3 +344,4 @@
     }
   }
 }
+
