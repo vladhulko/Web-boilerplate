@@ -175,12 +175,20 @@
     object-fit: cover;
   }
 
+  /* --- FIXED STYLES --- */
+  .initial-avatar {
+    width: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     .initials {
       font-size: 50px;
       font-weight: bold;
       color: $accent-color;
     }
-
+  }
 }
 
 
@@ -188,8 +196,9 @@
   position: absolute;
   top: 50px;
   right: 20px;
-  font-size: 30px;
+  font-size: 2.5rem;
   z-index: 2;
+  cursor: pointer;
 
   &.is-favorite {
     color: $star-badge-color;
@@ -248,4 +257,3 @@
   font-weight: bold;
   font-size: 14px;
 }
-
