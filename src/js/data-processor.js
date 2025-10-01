@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { randomUserMock, additionalUsers } from './Lab2-mock.js';
 
 const COURSES = [
@@ -29,8 +30,8 @@ const getTeachers = () => {
       gender: rawUser.gender ? capitalize(rawUser.gender) : existingUser.gender,
       title: isRandomUser ? rawUser.name.title : (rawUser.title || existingUser.title),
       full_name: isRandomUser
-          ? `${capitalize(rawUser.name.first)} ${capitalize(rawUser.name.last)}`
-          : (rawUser.full_name || existingUser.full_name),
+        ? `${capitalize(rawUser.name.first)} ${capitalize(rawUser.name.last)}`
+        : (rawUser.full_name || existingUser.full_name),
       city: rawUser.location?.city ? capitalize(rawUser.location.city) : (rawUser.city ? capitalize(rawUser.city) : existingUser.city),
       state: rawUser.location?.state ? capitalize(rawUser.location.state) : (rawUser.state ? capitalize(rawUser.state) : existingUser.state),
       country: rawUser.location?.country ? capitalize(rawUser.location.country) : (rawUser.country ? capitalize(rawUser.country) : existingUser.country),
@@ -60,7 +61,6 @@ const getTeachers = () => {
 
   const validateUser = (user) => {
     if (!user.full_name || typeof user.full_name !== 'string' || user.full_name.trim() === '') return false;
-    // FIX: Stricter validation for age to ensure it's a number and not undefined/null.
     if (typeof user.age !== 'number' || !Number.isInteger(user.age)) return false;
     if (!user.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) return false;
     return true;

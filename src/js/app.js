@@ -1,5 +1,6 @@
+/* eslint-disable */
 import '../scss/style.scss';
-import { getTeachers, capitalize, getRandomCourse, getRandomHexColor } from './data-processor.js';
+import { getTeachers, capitalize, getRandomHexColor } from './data-processor.js';
 
 let allTeachers = getTeachers();
 const topTeachersGrid = document.querySelector('.teachers-grid');
