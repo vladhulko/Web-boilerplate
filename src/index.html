@@ -58,6 +58,9 @@
 
             <div class="teachers-grid">
             </div>
+            <div class="pagination-controls">
+                <button id="load-more-btn" class="add-teacher-btn">Load More</button>
+            </div>
         </section>
 
         <section class="statistics">
@@ -76,13 +79,6 @@
                     <tbody id="stats-table-body">
                     </tbody>
                 </table>
-            </div>
-            <div class="pagination">
-                <span class="page-number active">1</span>
-                <span class="page-number">2</span>
-                <span class="page-number">3</span>
-                <span class="page-dots">...</span>
-                <span class="page-number">Last</span>
             </div>
         </section>
 
@@ -121,7 +117,7 @@
         </header>
         <div class="popup-body">
             <form class="form" id="add-teacher-form" novalidate>
-                <div class="form-errors" style="color: red; margin-bottom: 10px;"></div>
+                <div class="form-errors"></div>
                 <div class="form-group">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" placeholder="Enter name" required>
@@ -172,6 +168,12 @@
                                     <input type="radio" id="female" name="sex" value="female">
                                     <label for="female">Female</label>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="color">Background Color</label>
+                            <div class="color-picker-container">
+                                <input type="color" id="color" name="color" value="#d3d3d3">
                             </div>
                         </div>
                     </div>
