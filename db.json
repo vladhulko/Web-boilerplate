@@ -1,0 +1,21 @@
+{
+  "teachers": [
+    {
+      "id": "7489",
+      "full_name": "Vita Bublyk",
+      "course": "Mathematics",
+      "country": "United Kingdom",
+      "city": "Putyvl",
+      "email": "vita@gmail.com",
+      "phone": "+380754447865",
+      "b_date": "2006-01-07",
+      "age": 19,
+      "gender": "Female",
+      "note": "хряцать бублікі",
+      "favorite": true,
+      "bg_color": "#a60808",
+      "picture_large": null,
+      "picture_thumbnail": null
+    }
+  ]
+}
