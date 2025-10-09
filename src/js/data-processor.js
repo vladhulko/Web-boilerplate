@@ -3,7 +3,6 @@ const COURSES = [
   'Chess', 'Biology', 'Chemistry', 'Law', 'Art', 'Medicine', 'Statistics',
 ];
 
-// This function is now correctly exported
 export const capitalize = (str) => {
   if (typeof str !== 'string' || str.length === 0) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -81,4 +80,3 @@ const validateUser = (user) => {
   if (!user.phone || typeof user.phone !== 'string' || user.phone.length < 5) return false;
   return true;
 };
-
