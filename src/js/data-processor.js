@@ -1,4 +1,3 @@
-/* eslint-disable */
 const COURSES = [
   'Mathematics', 'Physics', 'English', 'Computer Science', 'Dancing',
   'Chess', 'Biology', 'Chemistry', 'Law', 'Art', 'Medicine', 'Statistics',
@@ -13,15 +12,17 @@ const getRandomCourse = () => COURSES[Math.floor(Math.random() * COURSES.length)
 
 const getRandomHexColor = () => `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 
+const formatPhoneNumber = (phone) => {
+  if (typeof phone !== 'string') return '';
+  return phone.replace(/[^\d]/g, '');
+};
+
 export const getTeachers = async (page = 1, results = 10) => {
   try {
     const localTeachersPromise = fetch('http://localhost:3000/teachers')
-        .then(response => {
-          if (!response.ok) return [];
-          return response.json();
-        })
-        .catch(error => {
-          console.warn("Could not fetch local teachers. Is json-server running?", error);
+        .then(response => response.ok ? response.json() : [])
+        .catch(() => {
+          console.warn("Could not fetch local teachers. Is json-server running?");
           return [];
         });
 
@@ -55,14 +56,14 @@ const formatRandomUserData = (user) => {
     full_name: `${capitalize(user.name.first)} ${capitalize(user.name.last)}`,
     city: user.location.city ? capitalize(user.location.city) : '',
     state: user.location.state ? capitalize(user.location.state) : '',
-    country: user.location.country ? capitalize(user.location.country) : '',
+    country: user.location.country,
     postcode: user.location.postcode,
     coordinates: user.location.coordinates,
     timezone: user.location.timezone,
     email: user.email,
     b_date: user.dob.date,
     age: user.dob.age,
-    phone: user.phone,
+    phone: formatPhoneNumber(user.phone),
     picture_large: user.picture.large,
     picture_thumbnail: user.picture.thumbnail,
     favorite: Math.random() < 0.2,
@@ -73,8 +74,9 @@ const formatRandomUserData = (user) => {
 };
 
 const validateUser = (user) => {
-  if (!user.full_name || typeof user.full_name !== 'string' || user.full_name.trim() === '') return false;
-  if (typeof user.age !== 'number' || !Number.isInteger(user.age)) return false;
-  if (!user.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) return false;
+  if (!user.full_name || typeof user.full_name !== 'string' || user.full_name.trim().split(' ').length < 2) return false;
+  if (!user.course || typeof user.course !== 'string') return false;
+  if (!user.age || typeof user.age !== 'number' || user.age < 18) return false;
+  if (!user.phone || typeof user.phone !== 'string' || user.phone.length < 5) return false;
   return true;
 };

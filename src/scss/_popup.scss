@@ -275,6 +275,12 @@
 
 .popup-footer {
   padding: 0 24px 24px 24px;
+
+  #map {
+    height: 250px;
+    margin-top: 15px;
+    display: none;
+  }
 }
 
 .info-description {

@@ -65,20 +65,37 @@
 
         <section class="statistics">
             <h2 class="section-title">Statistics</h2>
-            <div class="stats-table-container">
-                <table class="stats-table">
-                    <thead>
-                    <tr id="stats-table-header">
-                        <th data-sort-by="full_name">Name</th>
-                        <th data-sort-by="course">Speciality</th>
-                        <th data-sort-by="age">Age</th>
-                        <th data-sort-by="gender">Gender</th>
-                        <th data-sort-by="country">Nationality</th>
-                    </tr>
-                    </thead>
-                    <tbody id="stats-table-body">
-                    </tbody>
-                </table>
+            <div class="stats-tabs">
+                <button class="stats-tab active" data-view="table">Table</button>
+                <button class="stats-tab" data-view="chart">Chart</button>
+                <button class="stats-tab" data-view="pivot">Pivot</button>
+            </div>
+            <div class="stats-content">
+                <div class="stats-view active" id="stats-table-view">
+                    <div class="stats-table-container">
+                        <table class="stats-table">
+                            <thead>
+                            <tr id="stats-table-header">
+                                <th data-sort-by="full_name">Name</th>
+                                <th data-sort-by="course">Speciality</th>
+                                <th data-sort-by="age">Age</th>
+                                <th data-sort-by="gender">Gender</th>
+                                <th data-sort-by="country">Nationality</th>
+                            </tr>
+                            </thead>
+                            <tbody id="stats-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="stats-view" id="stats-chart-view">
+                    <div class="chart-container">
+                        <canvas id="statsPieChart"></canvas>
+                    </div>
+                </div>
+                <div class="stats-view" id="stats-pivot-view">
+                    <div id="pivot-container"></div>
+                </div>
             </div>
         </section>
 
@@ -202,6 +219,7 @@
                 <p class="info-name"></p>
                 <p class="info-subject"></p>
                 <p class="info-age-gender"></p>
+                <p class="info-birthday"></p>
                 <p class="info-location"></p>
                 <a href="#" class="info-email"></a>
                 <p class="info-phone"></p>
@@ -211,9 +229,11 @@
             <p class="info-description">
             </p>
             <a href="#" class="info-map-toggle">toggle map</a>
+            <div id="map"></div>
         </div>
     </div>
 </div>
+
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>
