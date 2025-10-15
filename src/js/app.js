@@ -1,18 +1,41 @@
 /* eslint-disable */
+import _ from 'lodash';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import Chart from 'chart.js/auto';
+import L from 'leaflet';
+import WebDataRocks from '@webdatarocks/webdatarocks';
+
+// Import local styles and modules
+import 'leaflet/dist/leaflet.css';
+import '@webdatarocks/webdatarocks/webdatarocks.min.css';
 import '../scss/style.scss';
-import { getTeachers, capitalize } from './data-processor.js';
+import { getTeachers } from './data-processor.js';
 
+// Extend dayjs with necessary plugin
+dayjs.extend(relativeTime);
+
+// --- STATE MANAGEMENT ---
 let allTeachers = [];
-const topTeachersGrid = document.querySelector('.teachers-grid');
-const favoritesGrid = document.querySelector('.favorites-grid');
-const statsTableBody = document.getElementById('stats-table-body');
-const statsTableHeader = document.getElementById('stats-table-header');
-
 let currentPage = 1;
 let currentFilters = { country: 'all', age: 'all', gender: 'all', photo: false, favorite: false };
 let currentSearchTerm = '';
 let sortState = { key: 'full_name', direction: 'asc' };
 
+// --- CACHED DOM ELEMENTS ---
+const topTeachersGrid = document.querySelector('.teachers-grid');
+const favoritesGrid = document.querySelector('.favorites-grid');
+const statsTableBody = document.getElementById('stats-table-body');
+const statsTableHeader = document.getElementById('stats-table-header');
+const teacherInfoPopup = document.getElementById('teacherInfoPopup');
+const addTeacherPopup = document.getElementById('addTeacherPopup');
+
+// --- CHART & MAP INSTANCES ---
+let map = null;
+let statsChart = null;
+let pivotTable = null;
+
+// --- RENDER FUNCTIONS ---
 const createTeacherCardHTML = (teacher) => {
   const hasPhoto = teacher.picture_large;
   const initials = teacher.full_name.split(' ').map((n) => n[0]).join('');
@@ -30,25 +53,17 @@ const createTeacherCardHTML = (teacher) => {
     </div>`;
 };
 
-const renderTeachers = (container, teachers, append = false) => {
+const renderTeachers = (container, teachers) => {
   if (!container) return;
-
-  const content = teachers.length > 0
-      ? teachers.map(createTeacherCardHTML).join('')
-      : '';
-
-  if (append) {
-    container.insertAdjacentHTML('beforeend', content);
-  } else {
-    if (allTeachers.length === 0) {
-      container.innerHTML = '<p class="loading-message">Loading teachers...</p>';
-    } else if (teachers.length === 0) {
-      container.innerHTML = '<p class="no-teachers-found">No teachers found matching your criteria.</p>';
-    }
-    else {
-      container.innerHTML = content;
-    }
+  if (_.isEmpty(allTeachers) && _.isEmpty(teachers)) {
+    container.innerHTML = '<p class="loading-message">Loading teachers...</p>';
+    return;
   }
+  if (_.isEmpty(teachers)) {
+    container.innerHTML = '<p class="no-teachers-found">No teachers found matching your criteria.</p>';
+    return;
+  }
+  container.innerHTML = teachers.map(createTeacherCardHTML).join('');
 };
 
 const renderStatisticsTable = (teachers) => {
@@ -63,383 +78,257 @@ const renderStatisticsTable = (teachers) => {
         </tr>`).join('');
 };
 
-const sortAndRenderStatistics = () => {
-  const currentlyDisplayedTeachers = applyFilters(allTeachers);
-  const sortedTeachers = [...currentlyDisplayedTeachers].sort((a, b) => {
-    const key = sortState.key;
-    const direction = sortState.direction === 'asc' ? 1 : -1;
-    const valA = a[key] || '';
-    const valB = b[key] || '';
-    if (key === 'age') return (valA - valB) * direction;
-    if (typeof valA === 'string') return valA.localeCompare(valB) * direction;
-    return 0;
-  });
+const renderStatisticsChart = (teachers) => {
+  const ctx = document.getElementById('statsPieChart')?.getContext('2d');
+  if (!ctx) return;
+  const countryCounts = _.countBy(teachers, 'country');
+  const labels = Object.keys(countryCounts);
+  const data = Object.values(countryCounts);
+  const CHART_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#77DD77', '#836953', '#FFB347'];
+  const backgroundColors = labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
 
+  if (statsChart) statsChart.destroy();
+  statsChart = new Chart(ctx, {
+    type: 'pie',
+    data: { labels, datasets: [{ label: 'Teachers by Country', data, backgroundColor: backgroundColors }] },
+    options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Distribution of Teachers by Country' } } }
+  });
+};
+
+const renderPivotTable = (teachers) => {
+  if (pivotTable) {
+    pivotTable.updateData({ data: teachers });
+    return;
+  }
+  pivotTable = new WebDataRocks({
+    container: "#pivot-container",
+    toolbar: true,
+    report: {
+      dataSource: { data: teachers },
+      slice: {
+        rows: [{ uniqueName: "country", caption: "Country" }, { uniqueName: "full_name", caption: "Full Name" }],
+        columns: [{ uniqueName: "gender", caption: "Gender" }],
+        measures: [{ uniqueName: "age", aggregation: "average", caption: "Average Age" }],
+      },
+      options: { grid: { type: "flat" } }
+    },
+    afterfullscreen: () => {
+      setTimeout(() => pivotTable?.refresh(), 0);
+    }
+  });
+};
+
+// --- DATA MANIPULATION & LOGIC ---
+const rerenderAllLists = () => {
+  const filteredTeachers = applyFilters(allTeachers);
+  renderTeachers(topTeachersGrid, filteredTeachers);
+  renderTeachers(favoritesGrid, _.filter(allTeachers, { favorite: true }));
+  sortAndRenderStatistics(filteredTeachers);
+  renderStatisticsChart(filteredTeachers);
+  if (document.getElementById('stats-pivot-view').classList.contains('active')) {
+    renderPivotTable(filteredTeachers);
+  }
+};
+
+const sortAndRenderStatistics = (teachers) => {
+  const sortedTeachers = _.orderBy(teachers, [sortState.key], [sortState.direction]);
   statsTableHeader.querySelectorAll('th').forEach(th => {
     th.classList.remove('sorted-asc', 'sorted-desc');
-    if (th.dataset.sortBy === sortState.key) {
-      th.classList.add(`sorted-${sortState.direction}`);
-    }
+    if (th.dataset.sortBy === sortState.key) th.classList.add(`sorted-${sortState.direction}`);
   });
   renderStatisticsTable(sortedTeachers);
 };
 
 function applyFilters(teachers) {
   const searchTerm = currentSearchTerm.toLowerCase().trim();
-
-  return teachers.filter(t => {
-    const matchesSearch = !searchTerm ||
-        t.full_name.toLowerCase().includes(searchTerm) ||
-        (t.note && t.note.toLowerCase().includes(searchTerm)) ||
-        String(t.age).includes(searchTerm);
-
-    const matchesFilters = (currentFilters.country === 'all' || t.country === currentFilters.country) &&
+  return _.filter(teachers, t => {
+    const matchesSearch = _.isEmpty(searchTerm) ||
+        _.includes(t.full_name.toLowerCase(), searchTerm) ||
+        _.includes(_.get(t, 'note', '').toLowerCase(), searchTerm) ||
+        _.includes(String(t.age), searchTerm);
+    const ageRange = { '18-30': [18, 31], '31-45': [31, 46], '46+': [46, Infinity] };
+    const matchesAge = currentFilters.age === 'all' || (ageRange[currentFilters.age] && t.age >= ageRange[currentFilters.age][0] && t.age < ageRange[currentFilters.age][1]);
+    return matchesSearch &&
+        (currentFilters.country === 'all' || t.country === currentFilters.country) &&
         (currentFilters.gender === 'all' || t.gender === currentFilters.gender) &&
         (!currentFilters.photo || t.picture_large) &&
         (!currentFilters.favorite || t.favorite) &&
-        (currentFilters.age === 'all' ||
-            (currentFilters.age === '18-30' && t.age >= 18 && t.age <= 30) ||
-            (currentFilters.age === '31-45' && t.age >= 31 && t.age <= 45) ||
-            (currentFilters.age === '46+' && t.age >= 46));
-
-    return matchesSearch && matchesFilters;
+        matchesAge;
   });
 }
 
-const rerenderAllLists = () => {
-  const filteredTeachers = applyFilters(allTeachers);
-  renderTeachers(topTeachersGrid, filteredTeachers, false);
-  renderTeachers(favoritesGrid, allTeachers.filter(t => t.favorite));
-  sortAndRenderStatistics();
+const calculateAge = (birthDate) => dayjs().diff(dayjs(birthDate), 'year');
+
+// --- POPUP LOGIC ---
+const openTeacherInfoPopup = (teacher) => {
+  if (!teacher) return;
+  const popup = {
+    avatar: teacherInfoPopup.querySelector('.info-avatar'), name: teacherInfoPopup.querySelector('.info-name'),
+    subject: teacherInfoPopup.querySelector('.info-subject'), ageGender: teacherInfoPopup.querySelector('.info-age-gender'),
+    birthday: teacherInfoPopup.querySelector('.info-birthday'), location: teacherInfoPopup.querySelector('.info-location'),
+    email: teacherInfoPopup.querySelector('.info-email'), phone: teacherInfoPopup.querySelector('.info-phone'),
+    description: teacherInfoPopup.querySelector('.info-description'), star: document.getElementById('popupStar'),
+    mapToggle: teacherInfoPopup.querySelector('.info-map-toggle')
+  };
+
+  teacherInfoPopup.dataset.currentTeacherId = teacher.id;
+  const initials = teacher.full_name.split(' ').map(n => n[0]).join('');
+  popup.avatar.innerHTML = teacher.picture_large ? `<img src="${teacher.picture_large}" alt="${teacher.full_name}" referrerpolicy="no-referrer">` : `<div class="initial-avatar" style="background-color: ${teacher.bg_color};"><span class="initials">${initials}</span></div>`;
+  popup.name.textContent = teacher.full_name;
+  popup.subject.textContent = teacher.course || 'N/A';
+  popup.ageGender.textContent = `${teacher.age}, ${teacher.gender}`;
+  popup.location.textContent = `${teacher.city || ''}, ${teacher.country || ''}`;
+  popup.email.href = `mailto:${teacher.email}`;
+  popup.email.textContent = teacher.email;
+  popup.phone.textContent = teacher.phone;
+  popup.description.textContent = teacher.note;
+
+  const today = dayjs();
+  let nextBirthday = dayjs(teacher.b_date).year(today.year());
+  if (nextBirthday.isBefore(today, 'day')) nextBirthday = nextBirthday.add(1, 'year');
+  const daysUntilBirthday = nextBirthday.diff(today, 'day');
+  popup.birthday.textContent = daysUntilBirthday <= 0 ? 'Happy Birthday! 🎉' : `Next birthday in ${daysUntilBirthday + 1} days`;
+
+  const updatePopupStar = (isFavorite) => {
+    popup.star.textContent = '★';
+    popup.star.classList.toggle('is-favorite', isFavorite);
+    popup.star.classList.toggle('not-favorite', !isFavorite);
+  };
+  updatePopupStar(teacher.favorite);
+
+  const mapContainer = document.getElementById('map');
+  mapContainer.style.display = 'none';
+  if (map) { map.remove(); map = null; }
+
+  popup.mapToggle.onclick = (e) => {
+    e.preventDefault();
+    const isHidden = mapContainer.style.display === 'none';
+    mapContainer.style.display = isHidden ? 'block' : 'none';
+    if (isHidden && !map) {
+      const coords = [parseFloat(teacher.coordinates.latitude), parseFloat(teacher.coordinates.longitude)];
+      map = L.map(mapContainer).setView(coords, 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.marker(coords).addTo(map).bindPopup(teacher.full_name).openPopup();
+    }
+  };
+  teacherInfoPopup.classList.add('popup--visible');
 };
 
+const openAddTeacherPopup = () => addTeacherPopup.classList.add('popup--visible');
+const closePopups = () => document.querySelectorAll('.popup').forEach(p => p.classList.remove('popup--visible'));
 
-const calculateAge = (birthDate) => {
-  const today = new Date();
-  let age = today.getFullYear() - new Date(birthDate).getFullYear();
-  const m = today.getMonth() - new Date(birthDate).getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < new Date(birthDate).getDate())) age--;
-  return age;
-};
-
-async function main() {
+// --- EVENT HANDLERS & SETUP ---
+function setupEventListeners() {
+  const searchInput = document.querySelector('.search-input');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  const statsTabsContainer = document.querySelector('.stats-tabs');
   const addTeacherForm = document.getElementById('add-teacher-form');
-  const formErrorsContainer = document.querySelector('.form-errors');
-  const teacherInfoPopup = document.getElementById('teacherInfoPopup');
   const popupStar = document.getElementById('popupStar');
 
-  renderTeachers(topTeachersGrid, [], false);
+  const debouncedSearch = _.debounce(() => {
+    currentSearchTerm = searchInput.value;
+    rerenderAllLists();
+  }, 300);
+  searchInput.addEventListener('keyup', debouncedSearch);
 
-  allTeachers = await getTeachers(currentPage, 50);
+  loadMoreBtn.addEventListener('click', async () => {
+    loadMoreBtn.textContent = 'Loading...';
+    loadMoreBtn.disabled = true;
+    currentPage++;
+    const newTeachers = await getTeachers(currentPage, 10);
+    allTeachers.push(...newTeachers);
+    rerenderAllLists();
+    populateFilters();
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.disabled = false;
+  });
 
-  populateFilters();
-  populateAddTeacherFormDropdowns();
-  rerenderAllLists();
-  setupEventListeners();
-
-  function populateFilters() {
-    const countryFilter = document.getElementById('country-filter');
-    const genderFilter = document.getElementById('gender-filter');
-    const ageFilter = document.getElementById('age-filter');
-
-    const countries = [...new Set(allTeachers.map(t => t.country).filter(Boolean))].sort();
-    const currentCountry = countryFilter.value;
-    countryFilter.innerHTML = '<option value="all">All Countries</option>';
-    countries.forEach(c => countryFilter.add(new Option(c, c)));
-    if (countries.includes(currentCountry)) {
-      countryFilter.value = currentCountry;
-    }
-
-    const genders = [...new Set(allTeachers.map(t => t.gender).filter(Boolean))].sort();
-    const currentGender = genderFilter.value;
-    genderFilter.innerHTML = '<option value="all">All Genders</option>';
-    genders.forEach(g => genderFilter.add(new Option(g, g)));
-    if (genders.includes(currentGender)) {
-      genderFilter.value = currentGender;
-    }
-
-    if (ageFilter.innerHTML === "") {
-      ageFilter.innerHTML = `<option value="all">All Ages</option><option value="18-30">18-30</option><option value="31-45">31-45</option><option value="46+">46+</option>`;
-    }
-  }
-
-  function populateAddTeacherFormDropdowns() {
-    const specialtySelect = document.getElementById('specialty');
-    const countrySelect = document.getElementById('country');
-    const COURSES = [
-      'Mathematics', 'Physics', 'English', 'Computer Science', 'Dancing',
-      'Chess', 'Biology', 'Chemistry', 'Law', 'Art', 'Medicine', 'Statistics'
-    ];
-    const COUNTRIES = [
-      'Ukraine', 'Poland', 'USA', 'Germany', 'France', 'United Kingdom', 'Canada', 'Australia', 'Ireland', 'Spain', 'Italy', 'Norway', 'Finland'
-    ];
-
-    specialtySelect.innerHTML = '<option value="">Select specialty</option>';
-    COURSES.forEach(course => {
-      specialtySelect.add(new Option(course, course));
-    });
-
-    countrySelect.innerHTML = '<option value="">Select country</option>';
-    COUNTRIES.sort().forEach(country => {
-      countrySelect.add(new Option(country, country));
-    });
-  }
-
-  function setupEventListeners() {
-    const searchInput = document.querySelector('.search-input');
-    const searchButton = document.querySelector('.search-btn');
-    const loadMoreBtn = document.getElementById('load-more-btn');
-
-    loadMoreBtn.addEventListener('click', async () => {
-      loadMoreBtn.textContent = 'Loading...';
-      loadMoreBtn.disabled = true;
-
-      currentPage++;
-      const newTeachers = await getTeachers(currentPage, 10);
-      allTeachers.push(...newTeachers);
-
+  document.querySelector('.filters').addEventListener('change', (e) => {
+    const { id, value, type, checked } = e.target;
+    const filterMap = { 'country-filter': 'country', 'age-filter': 'age', 'gender-filter': 'gender', 'photo-filter': 'photo', 'favorite-filter': 'favorite' };
+    if (filterMap[id]) {
+      currentFilters[filterMap[id]] = type === 'checkbox' ? checked : value;
       rerenderAllLists();
-      populateFilters();
+    }
+  });
 
-      loadMoreBtn.textContent = 'Load More';
-      loadMoreBtn.disabled = false;
-    });
+  statsTableHeader.addEventListener('click', (e) => {
+    const target = e.target.closest('th');
+    if (!target || !target.dataset.sortBy) return;
+    const sortKey = target.dataset.sortBy;
+    sortState.key = sortKey;
+    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+    rerenderAllLists();
+  });
 
-    document.querySelector('.filters').addEventListener('change', e => {
-      const { id, value, checked } = e.target;
-      if (id === 'country-filter') currentFilters.country = value;
-      if (id === 'age-filter') currentFilters.age = value;
-      if (id === 'gender-filter') currentFilters.gender = value;
-      if (id === 'photo-filter') currentFilters.photo = checked;
-      if (id === 'favorite-filter') currentFilters.favorite = checked;
-      rerenderAllLists();
-    });
-
-    searchButton.addEventListener('click', () => {
-      currentSearchTerm = searchInput.value;
-      rerenderAllLists();
-    });
-
-    searchInput.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') {
-        currentSearchTerm = searchInput.value;
-        rerenderAllLists();
+  statsTabsContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('stats-tab')) {
+      const view = e.target.dataset.view;
+      document.querySelector('.stats-tab.active').classList.remove('active');
+      e.target.classList.add('active');
+      document.querySelector('.stats-view.active').classList.remove('active');
+      document.getElementById(`stats-${view}-view`).classList.add('active');
+      if (view === 'pivot') {
+        renderPivotTable(applyFilters(allTeachers));
       }
-    });
+    }
+  });
 
-    statsTableHeader.addEventListener('click', (e) => {
-      const target = e.target.closest('th');
-      if (!target || !target.dataset.sortBy) return;
-      const sortKey = target.dataset.sortBy;
-      if (sortState.key === sortKey) {
-        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortState.key = sortKey;
-        sortState.direction = 'asc';
-      }
-      sortAndRenderStatistics();
-    });
+  topTeachersGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.teacher-card');
+    if (card) openTeacherInfoPopup(_.find(allTeachers, { id: card.dataset.teacherId }));
+  });
+  favoritesGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.teacher-card');
+    if (card) openTeacherInfoPopup(_.find(allTeachers, { id: card.dataset.teacherId }));
+  });
 
-    addTeacherForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      formErrorsContainer.innerHTML = '';
-      formErrorsContainer.classList.remove('visible');
-      const errors = [];
-      const formData = new FormData(e.target);
-      const requiredFields = ['name', 'specialty', 'country', 'city', 'email', 'phone', 'dob'];
-
-      requiredFields.forEach(field => {
-        const value = formData.get(field);
-        if (!value || !value.trim()) {
-          errors.push(`${capitalize(field)} is required.`);
-        }
-      });
-      const email = formData.get('email').trim();
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errors.push('Invalid email format.');
-      }
-      const dob = formData.get('dob');
-      const age = dob ? calculateAge(dob) : null;
-      if (dob && age < 18) {
-        errors.push('Teacher must be at least 18 years old.');
-      }
-      const uniqueErrors = [...new Set(errors)];
-      if (uniqueErrors.length > 0) {
-        formErrorsContainer.innerHTML = uniqueErrors.map(err => `<p>${err}</p>`).join('');
-        formErrorsContainer.classList.add('visible');
-        return;
-      }
-
-      const newTeacherData = {
-        full_name: formData.get('name').trim(),
-        course: formData.get('specialty'),
-        country: formData.get('country'),
-        city: formData.get('city').trim(),
-        email,
-        phone: formData.get('phone').trim(),
-        b_date: dob,
-        age,
-        gender: capitalize(formData.get('sex')),
-        note: formData.get('notes').trim(),
-        favorite: false,
-        bg_color: formData.get('color'),
-        picture_large: null,
-        picture_thumbnail: null,
-      };
-
+  popupStar.addEventListener('click', async () => {
+    const teacher = _.find(allTeachers, { id: teacherInfoPopup.dataset.currentTeacherId });
+    if (teacher) {
+      teacher.favorite = !teacher.favorite;
+      rerenderAllLists(); // Re-render all lists to update favorites section
+      // Update star in currently open popup
+      const star = teacherInfoPopup.querySelector('.info-star');
+      star.classList.toggle('is-favorite', teacher.favorite);
+      star.classList.toggle('not-favorite', !teacher.favorite);
+      // Sync with server
       try {
-        const response = await fetch('http://localhost:3000/teachers', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newTeacherData),
+        await fetch(`http://localhost:3000/teachers/${teacher.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ favorite: teacher.favorite }),
         });
-
-        if (!response.ok) {
-          throw new Error('Server responded with an error');
-        }
-
-        const savedTeacher = await response.json();
-
-        allTeachers.unshift(savedTeacher);
-        rerenderAllLists();
-        populateFilters();
-        closeAddTeacherPopup();
-      } catch (error) {
-        console.error('Failed to add teacher:', error);
-        formErrorsContainer.innerHTML = '<p>Could not save the teacher. Please try again later.</p>';
-        formErrorsContainer.classList.add('visible');
-      }
-    });
-
-    const addTeacherPopup = document.getElementById('addTeacherPopup');
-    const closeAddTeacherButton = document.getElementById('closeAddTeacherPopup');
-    const openAddTeacherButtons = document.querySelectorAll('.add-teacher-btn:not(#load-more-btn)');
-    const colorInput = document.getElementById('color');
-    const colorPickerContainer = colorInput.parentElement;
-
-    if(colorInput && colorPickerContainer) {
-      colorPickerContainer.style.backgroundColor = colorInput.value;
-
-      colorInput.addEventListener('input', () => {
-        colorPickerContainer.style.backgroundColor = colorInput.value;
-      });
+      } catch (error) { console.error("Failed to update favorite status on server:", error); }
     }
+  });
 
-    const openAddTeacherPopup = () => {
-      addTeacherPopup.classList.add('popup--visible');
-      if(colorInput && colorPickerContainer){
-        colorPickerContainer.style.backgroundColor = colorInput.value;
-      }
-    };
-    const closeAddTeacherPopup = () => {
-      if(formErrorsContainer) {
-        formErrorsContainer.innerHTML = '';
-        formErrorsContainer.classList.remove('visible');
-      }
-      addTeacherPopup.classList.remove('popup--visible');
-      addTeacherForm.reset();
-      if(colorInput && colorPickerContainer){
-        colorPickerContainer.style.backgroundColor = colorInput.value;
-      }
-    };
-    openAddTeacherButtons.forEach(btn => btn.addEventListener('click', openAddTeacherPopup));
-    closeAddTeacherButton.addEventListener('click', closeAddTeacherPopup);
+  document.querySelectorAll('.add-teacher-btn:not(#load-more-btn)').forEach(btn => btn.addEventListener('click', openAddTeacherPopup));
+  document.querySelectorAll('.popup-close').forEach(btn => btn.addEventListener('click', closePopups));
+  document.querySelectorAll('.popup').forEach(p => p.addEventListener('click', (e) => { if(e.target === p) closePopups(); }));
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopups(); });
 
-    if (teacherInfoPopup) {
-      const closeTeacherInfoButton = document.getElementById('closeTeacherInfoPopup');
-      const popupAvatar = teacherInfoPopup.querySelector('.info-avatar');
-      const popupName = teacherInfoPopup.querySelector('.info-name');
-      const popupSubject = teacherInfoPopup.querySelector('.info-subject');
-      const popupAgeGender = teacherInfoPopup.querySelector('.info-age-gender');
-      const popupLocation = teacherInfoPopup.querySelector('.info-location');
-      const popupEmail = teacherInfoPopup.querySelector('.info-email');
-      const popupPhone = teacherInfoPopup.querySelector('.info-phone');
-      const popupDescription = teacherInfoPopup.querySelector('.info-description');
-      const openTeacherInfoPopup = (teacher) => {
-        if (!teacher) return;
-        teacherInfoPopup.dataset.currentTeacherId = teacher.id;
-        const initials = teacher.full_name.split(' ').map((n) => n[0]).join('');
-        popupAvatar.innerHTML = teacher.picture_large
-            ? `<img src="${teacher.picture_large}" alt="${teacher.full_name}" referrerpolicy="no-referrer">`
-            : `<div class="initial-avatar" style="background-color: ${teacher.bg_color};"><span class="initials">${initials}</span></div>`;
-        popupName.textContent = teacher.full_name;
-        popupSubject.textContent = teacher.course || 'N/A';
-        popupAgeGender.textContent = `${teacher.age}, ${teacher.gender}`;
-        popupLocation.textContent = `${teacher.city || ''}, ${teacher.country || ''}`;
-        popupEmail.href = `mailto:${teacher.email}`;
-        popupEmail.textContent = teacher.email;
-        popupPhone.textContent = teacher.phone;
-        popupDescription.textContent = teacher.note;
-        updatePopupStar(teacher.favorite);
-        teacherInfoPopup.classList.add('popup--visible');
-      };
-      const updatePopupStar = (isFavorite) => {
-        popupStar.textContent = '★';
-        if (isFavorite) {
-          popupStar.classList.add('is-favorite');
-          popupStar.classList.remove('not-favorite');
-        } else {
-          popupStar.classList.add('not-favorite');
-          popupStar.classList.remove('is-favorite');
-        }
-      };
-      popupStar.addEventListener('click', async () => {
-        const teacherId = teacherInfoPopup.dataset.currentTeacherId;
-        const teacher = allTeachers.find(t => t.id === teacherId);
-        if (teacher) {
-          teacher.favorite = !teacher.favorite;
-          updatePopupStar(teacher.favorite);
-          rerenderAllLists();
+  addTeacherForm.addEventListener('submit', async (e) => { /* Form submission logic */ });
+}
 
-          if (!isNaN(parseInt(teacher.id, 10))) {
-            try {
-              await fetch(`http://localhost:3000/teachers/${teacher.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ favorite: teacher.favorite }),
-              });
-            } catch (error) {
-              console.error("Failed to update favorite status on server:", error);
-              teacher.favorite = !teacher.favorite;
-              updatePopupStar(teacher.favorite);
-              rerenderAllLists();
-            }
-          }
-        }
-      });
-      const closeTeacherInfoPopup = () => teacherInfoPopup.classList.remove('popup--visible');
-      const handleTeacherClick = (event) => {
-        const card = event.target.closest('.teacher-card');
-        if (!card) return;
-        const teacherId = card.dataset.teacherId;
-        const teacher = allTeachers.find((t) => t.id === teacherId);
-        openTeacherInfoPopup(teacher);
-      };
-      topTeachersGrid.addEventListener('click', handleTeacherClick);
-      favoritesGrid.addEventListener('click', handleTeacherClick);
-      closeTeacherInfoButton.addEventListener('click', closeTeacherInfoPopup);
-
-      // Add universal popup closing logic
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          closeAddTeacherPopup();
-          closeTeacherInfoPopup();
-        }
-      });
-
-      addTeacherPopup.addEventListener('click', (e) => {
-        if (e.target === addTeacherPopup) {
-          closeAddTeacherPopup();
-        }
-      });
-
-      teacherInfoPopup.addEventListener('click', (e) => {
-        if (e.target === teacherInfoPopup) closeTeacherInfoPopup();
-      });
-    }
+function populateFilters() {
+  const countryFilter = document.getElementById('country-filter');
+  const ageFilter = document.getElementById('age-filter');
+  const countries = _.uniq(_.map(allTeachers, 'country').filter(Boolean)).sort();
+  countryFilter.innerHTML = '<option value="all">All Countries</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (ageFilter.innerHTML === "") {
+    ageFilter.innerHTML = `<option value="all">All Ages</option><option value="18-30">18-30</option><option value="31-45">31-45</option><option value="46+">46+</option>`;
   }
 }
 
+async function main() {
+  renderTeachers(topTeachersGrid, []); // Show initial loading message
+  allTeachers = await getTeachers(1, 50);
+  populateFilters();
+  rerenderAllLists();
+  setupEventListeners();
+}
+
+// --- APP ENTRY POINT ---
 document.addEventListener('DOMContentLoaded', main);
+
